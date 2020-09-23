@@ -69,8 +69,7 @@ function Boards() {
       }
       boardArr.push(values);
       localStorage.setItem('boards', JSON.stringify(boardArr));
-      history.push(`/boards/${response.data.content.id}`, {importtanGeldi: false,
-        importedFormState: response.data.content.id});
+      history.push(`/boards/${response.data.content.id}`);
     } catch (e) {
       console.log(e);
     }
@@ -104,9 +103,8 @@ function Boards() {
 
   function onclickComponent(e) {
     const componentFromID = e.target.getAttribute('id');
-    console.log(componentFromID);
-    history.push(`boards/${componentFromID}`,
-        {importtanGeldi: true, importedFormState: componentFromID});
+    // console.log(componentFromID);
+    history.push(`boards/${componentFromID}`);
   }
 
   const handleBoardSave = useCallback((configuration) => {
@@ -146,8 +144,13 @@ function Boards() {
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title" id="exampleModalLabel">Create New Board</h5>
-                    <button type="button" className="close" data-dismiss="modal" aria-label="Close"
-                      onClick={setNewFalse}>
+                    <button
+                      type="button"
+                      className="close"
+                      data-dismiss="modal"
+                      aria-label="Close"
+                      onClick={setNewFalse}
+                    >
                       <span aria-hidden="true">&times;</span>
                     </button>
                   </div>
@@ -155,15 +158,22 @@ function Boards() {
                     <form>
                       <div className="form-group">
                         <label htmlFor="message-text" className="col-form-label">Enter Form Title</label>
-                        <textarea className="form-control" id="message-text"
-                          onChange={(event) => setTitle(event.target.value)}></textarea>
+                        <textarea
+                          className="form-control"
+                          id="message-text"
+                          onChange={(event) => setTitle(event.target.value)}
+                        ></textarea>
                       </div>
                     </form>
                   </div>
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" data-dismiss="modal"
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      data-dismiss="modal"
                       onClick={setNewFalse}>Close</button>
-                    <button type="button"
+                    <button
+                      type="button"
                       className="btn btn-primary"
                       onClick={handleNewClick}>Next</button>
                   </div>
@@ -193,7 +203,7 @@ function Boards() {
                 data-toggle="modal"
                 onClick={onNewButtonClick}
               >
-                Create New Board
+                Create New Form
               </button>
               <button
                 type="button"
@@ -213,7 +223,9 @@ function Boards() {
                   <div className="card-body">
                     <h5 className="card-title" >{board.title}</h5>
                     <p className="card-text"></p>
-                    <button id={board.id} onClick={onclickComponent}
+                    <button
+                      id={board.id}
+                      onClick={onclickComponent}
                       className="btn btn-secondary">Go to Board</button>
                   </div>
                 </button>

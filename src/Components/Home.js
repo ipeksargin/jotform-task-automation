@@ -1,9 +1,11 @@
 
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import Head from './Head';
 import List from './List';
 import {runGetRequestWithParams, runPostRequestWithParams} from '../Helper/APIHelper';
 import {useParams} from 'react-router-dom';
+import Image from '../imgg.jpg'; // Import using relative path
+
 
 function Home() {
   const [items, setItems] = useState([]);
@@ -14,12 +16,47 @@ function Home() {
   const [showprogressInput, setshowprogressInput] = useState(false);
   const [showdoneInput, setshowdoneInput] = useState(false);
   const [newTitle, setNewtitle] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [options, setOptions] = useState([]);
+
+  const styles = {
+    paperContainer: {
+      backgroundImage: `url(${Image})`,
+      height: '100vh',
+    },
+  };
+
   const {boardid} = useParams();
 
   // useEffect, mounted tricki ile, once formun questionlarini cek.
   // status question idsi mappingte var. onunla optionlari bul
   // orn (Planlanmamis|Calisilacak|Calisilan|Tamamlanmis|).split('|')
   // answerlari cek, ustte buldugun, optionlara gore grupla,
+
+  useEffect(() => {
+    if(!mounted){
+      getFormQuestions();
+    }
+  }, [])
+
+  async function getFormQuestions() {
+    const endPoint = `form/${boardid}/questions`;
+    const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+    const response = await runGetRequestWithParams(endPoint, queryString);
+    const responseContent = response.data.content;
+    console.log(responseContent);
+
+    let boards = JSON.parse(localStorage.getItem('boards'));
+    const questionBoard = boards.find((b) => b.id === boardid);
+    // console.log(questionBoard);
+    let statusID = questionBoard.mappings.status;
+    console.log(statusID);
+
+    const options = responseContent[statusID].options;
+    const optionsArr = options.split('|');
+    console.log(optionsArr);
+    setOptions(optionsArr);
+  }
 
   const getSubmissions = useCallback(async () => {
     const endPoint = `form/${boardid}/submissions`;
@@ -29,15 +66,15 @@ function Home() {
     const data = response.data.content;
     console.log(data);
 
-    // const items = [];
-    // for (let i =0; i<data.length; i++) {
-    //   const filterData = await filterDataByColumnConfs(data[i].answers);
-    //   items.push(filterData);
-    // }
+    const items = [];
+    for (let i =0; i<data.length; i++) {
+      const filterData = data[i].answers;
+      items.push(filterData);
+    }
+    console.log(items);
 
-    // console.log(items);
-    // setItems(items);
-    // const todoTasks = items.filter((item) => item.status==='To Do');
+    setItems(items);
+
     // setTodoTasks(todoTasks);
     // const doneTasks = items.filter((item) => item.status==='Done');
     // setDoneTasks(doneTasks);
@@ -81,6 +118,7 @@ function Home() {
   function setshowdone() {
     setshowdoneInput(true);
   }
+
   function setshowtodo() {
     setshowtodoInput(true);
   }
@@ -97,22 +135,10 @@ function Home() {
 
     const data = response.data.content;
     console.log(data);
-    // const items = [];
-    // for (let i =0; i<data.length; i++) {
-    //   const filterData = await filterDataByColumnConfs(data[i].answers);
-    //   items.push(filterData);
-    // }
-    // console.log(items);
-
-    // const myitem = items.find((i) => i.status === 'Doing');
-    // console.log(myitem);
-    // if (myitem.status === 'Doing') {
-    //   return myitem.status === 'Done';
-    // }
-    // console.log(myitem);
   }, [boardid]);
 
   return (
+    <div style={styles.paperContainer}>
     <div className="App">
       <Head />
       <div className="container">
@@ -125,7 +151,7 @@ function Home() {
                   onClick={setshowtodo}
                   className="btn btn-dark"
                 >
-                  + ADD TO DO TASK
+                  + ADD TASK
                 </button>
               </div>
               <div>
@@ -171,8 +197,11 @@ function Home() {
           <div className="col-sm-4">
             <List name="In Progress">
               <div className="text-center">
-                <button type="button" className="btn btn-dark"
-                  onClick={setshowprogress}>+ ADD PROGRESS TASK</button>
+                <button
+                type="button"
+                className="btn btn-dark"
+                onClick={setshowprogress}
+              >+ ADD TASK</button>
               </div>
               <div>
                 {showprogressInput && (
@@ -214,7 +243,7 @@ function Home() {
             <List name="Done">
               <div className="text-center">
                 <button type="button" className="btn btn-dark"
-                  onClick={setshowdone}>+ ADD DONE TASK</button>
+                  onClick={setshowdone}>+ ADD TASK</button>
               </div>
               <div>
                 {showdoneInput && (
@@ -252,6 +281,7 @@ function Home() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
