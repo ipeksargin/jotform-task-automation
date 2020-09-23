@@ -23,9 +23,6 @@ function Boards() {
   const [title, setTitle] = useState('');
   const [boards, setBoards] = useState([]);
   const [mounted, setMounted] = useState(false);
-  const [importtanGeldi, setgeldi] = useState(false);
-  const [importedFormState, setImportedForm] = useState('');
-  const [importedFormName, setImportedFormName] = useState('');
   const [username, setUsername] = useState('');
 
 
@@ -101,14 +98,6 @@ function Boards() {
     setNewModal(true);
   }
 
-  function onExistingButtonClick(e) {
-    setModal(false);
-    const importedFormid = e.target.getAttribute('id');
-    const importedFormName = e.target.getAttribute('name');
-    history.push(`boards/${importedFormid}`,
-        {importtanGeldi: true, importedFormState: importedFormid, importedFormName: importedFormName});
-  }
-
   function closeExistingModal() {
     setModal(false);
   }
@@ -119,6 +108,28 @@ function Boards() {
     history.push(`boards/${componentFromID}`,
         {importtanGeldi: true, importedFormState: componentFromID});
   }
+
+  const handleBoardSave = useCallback((configuration) => {
+    let boards = JSON.parse(localStorage.getItem('boards'));
+    if (!boards) {
+      boards = [];
+    }
+
+    const form = forms.find((form) => {
+      return form.id === configuration.formID;
+    });
+
+    if (!form) {
+      window.alert('Unable to find form: ' + configuration.formID);
+      return;
+    }
+
+    boards.push({title: form.title, id: configuration.formID, mappings: configuration.mappings});
+
+    localStorage.setItem('boards', JSON.stringify(boards));
+
+    history.push(`/boards/${configuration.formID}`);
+  }, [forms, history]);
 
   if (!mounted) {
     return null;
@@ -165,7 +176,7 @@ function Boards() {
           showExistingModal && (
             <FormSelector
               forms={forms}
-              onExistingButtonClick={onExistingButtonClick}
+              onSave={handleBoardSave}
               closeExistingModal={closeExistingModal}
             />
           )

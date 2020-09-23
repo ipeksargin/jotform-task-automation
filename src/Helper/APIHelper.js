@@ -18,3 +18,13 @@ export async function runPostRequestWithParams(endPoint, queryString, data) {
   }
   return null;
 }
+
+export function convertJsonDataToArray(data) {
+  const keys = Object.keys(data);
+  const arr = [];
+  for (let i =0; i<keys.length; i++) {
+    arr.push(data[keys[i]]);
+  }
+  console.log(arr);
+  return arr;
+}
