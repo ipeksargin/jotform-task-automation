@@ -2,13 +2,13 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import Head from './Head';
 import List from './List';
+import ListChild from './ListChild';
 import {runGetRequestWithParams, runPostRequestWithParams} from '../Helper/APIHelper';
 import {useParams} from 'react-router-dom';
 import Image from '../imgg.jpg'; // Import using relative path
 
 
 function Home() {
-  const [items, setItems] = useState([]);
   const [todoTasks, setTodoTasks] = useState([]);
   const [doneTasks, setDoneTasks] = useState([]);
   const [progressTasks, setProgressTasks] = useState([]);
@@ -18,6 +18,7 @@ function Home() {
   const [newTitle, setNewtitle] = useState('');
   const [mounted, setMounted] = useState(false);
   const [options, setOptions] = useState([]);
+  const [statusID, setStatusID] = useState(null);
 
   const styles = {
     paperContainer: {
@@ -33,31 +34,6 @@ function Home() {
   // orn (Planlanmamis|Calisilacak|Calisilan|Tamamlanmis|).split('|')
   // answerlari cek, ustte buldugun, optionlara gore grupla,
 
-  useEffect(() => {
-    if(!mounted){
-      getFormQuestions();
-    }
-  }, [])
-
-  async function getFormQuestions() {
-    const endPoint = `form/${boardid}/questions`;
-    const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
-    const response = await runGetRequestWithParams(endPoint, queryString);
-    const responseContent = response.data.content;
-    console.log(responseContent);
-
-    let boards = JSON.parse(localStorage.getItem('boards'));
-    const questionBoard = boards.find((b) => b.id === boardid);
-    // console.log(questionBoard);
-    let statusID = questionBoard.mappings.status;
-    console.log(statusID);
-
-    const options = responseContent[statusID].options;
-    const optionsArr = options.split('|');
-    console.log(optionsArr);
-    setOptions(optionsArr);
-  }
-
   const getSubmissions = useCallback(async () => {
     const endPoint = `form/${boardid}/submissions`;
     const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
@@ -66,24 +42,54 @@ function Home() {
     const data = response.data.content;
     console.log(data);
 
-    const items = [];
-    for (let i =0; i<data.length; i++) {
-      const filterData = data[i].answers;
-      items.push(filterData);
-    }
-    console.log(items);
+    // console.log(options);
+    console.log(statusID);
 
-    setItems(items);
+    const tasks = data.reduce((acc, i) => {
+      if (!acc[i.answers[3].answer]) {
+        acc[i.answers[3].answer] = [i.answers[3]];
+      } else {
+        acc[i.answers[3].answer].push([i.answers[3]]);
+      }
+      return acc;
+    }, {});
+    console.log(tasks);
+
+    setDoneTasks(tasks.Done);
+    setProgressTasks(tasks.Doing);
+    setTodoTasks(tasks['To Do']);
 
     // setTodoTasks(todoTasks);
-    // const doneTasks = items.filter((item) => item.status==='Done');
-    // setDoneTasks(doneTasks);
     // const progressTasks = items.filter((item) => item.status==='Doing');
-    // setProgressTasks(progressTasks);
-    // console.log(todoTasks);
-    // setImportModal(false);
-    // saveLocalStorage();
-  }, [boardid]);
+  }, [boardid, statusID]);
+
+  useEffect(() => {
+    async function getFormQuestions() {
+      const endPoint = `form/${boardid}/questions`;
+      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+      const response = await runGetRequestWithParams(endPoint, queryString);
+      const responseContent = response.data.content;
+      // console.log(responseContent);
+
+      const boards = JSON.parse(localStorage.getItem('boards'));
+      const questionBoard = boards.find((b) => b.id === boardid);
+      // console.log(questionBoard);
+      const statusID = questionBoard.mappings.status;
+      // console.log(statusID);
+      setStatusID(statusID);
+
+      const options = responseContent[statusID].options;
+      const optionsArr = options.split('|');
+      // console.log(optionsArr);
+      setOptions(optionsArr);
+      setMounted(true);
+      console.log(optionsArr);
+    }
+    if (!mounted) {
+      getFormQuestions();
+      getSubmissions();
+    }
+  }, [boardid, getSubmissions, mounted]);
 
   const addTaskSubmission = useCallback(async (e) => {
     try {
@@ -115,16 +121,17 @@ function Home() {
     }
   }, [boardid, newTitle]);
 
-  function setshowdone() {
+  const setshowdone = useCallback((e) => {
     setshowdoneInput(true);
-  }
+  }, []);
 
-  function setshowtodo() {
+  const setshowtodo = useCallback((e) => {
     setshowtodoInput(true);
-  }
-  function setshowprogress() {
+  }, []);
+
+  const setshowprogress = useCallback((e) => {
     setshowprogressInput(true);
-  }
+  }, []);
 
   const moveTask = useCallback(async (e) => {
     const taskStatus = e.currentTarget.getAttribute('data-status');
@@ -139,149 +146,56 @@ function Home() {
 
   return (
     <div style={styles.paperContainer}>
-    <div className="App">
-      <Head />
-      <div className="container">
-        <div className="row">
-          <div className="col-sm-4">
-            <List name="To Do">
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={setshowtodo}
-                  className="btn btn-dark"
-                >
-                  + ADD TASK
-                </button>
-              </div>
-              <div>
-                {showtodoInput && (
-                  <div className="input-group mt-3">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Task Title"
-                      aria-describedby="button-addon2"
-                      onChange={(event) =>
-                        setNewtitle(event.target.value)
-                      }></input>
-                    <div className="input-group-append">
+      <div className="App">
+        <Head />
+        <div className="container">
+          <div className="row">
+            {options.map((option) =>{
+              return (
+                <div className="col-sm-4" key={option}>{}
+                  <List name={option}>
+                    <ListChild title="abc" description="xys"/>
+                    <div className="text-center">
                       <button
-                        className="btn btn-outline-secondary"
                         type="button"
-                        name="title"
-                        data-status="To Do"
-                        onClick={addTaskSubmission}
-                        id="button-addon2"
-                      >Add</button>
+                        onClick={setshowtodo}
+                        className="btn btn-dark mt-2"
+                        data-option={option}
+                      >
+                      + ADD TASK
+                      </button>
                     </div>
-                  </div>)
-                }
-              </div>
-              {todoTasks.map((item) => {
-                return (
-                  <div className="col" key={item.name}>
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="col">
-                          <h5 className="card-title">{item.title}</h5>
-                          <p className="card-text">{item.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </List>
-          </div>
-          <div className="col-sm-4">
-            <List name="In Progress">
-              <div className="text-center">
-                <button
-                type="button"
-                className="btn btn-dark"
-                onClick={setshowprogress}
-              >+ ADD TASK</button>
-              </div>
-              <div>
-                {showprogressInput && (
-                  <div className="input-group mt-3">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Task Title"
-                      onChange={(event) =>
-                        setNewtitle(event.target.value)
+                    <div>
+                      {showtodoInput && (
+                        <div className="input-group mt-3">
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Task Title"
+                            aria-describedby="button-addon2"
+                            onChange={(event) =>
+                              setNewtitle(event.target.value)
+                            }></input>
+                          <div className="input-group-append">
+                            <button
+                              className="btn btn-outline-secondary"
+                              type="button"
+                              name="title"
+                              data-status="To Do"
+                              onClick={addTaskSubmission}
+                              id="button-addon2"
+                            >Add</button>
+                          </div>
+                        </div>)
                       }
-                      aria-describedby="button-addon2"></input>
-                    <div className="input-group-append">
-                      <button
-                        className="btn btn-outline-secondary"
-                        type="button"
-                        id="button-addon2"
-                        data-status="Doing"
-                        onClick={addTaskSubmission}
-                      >Add</button>
                     </div>
-                  </div>)
-                }
-              </div>
-              {progressTasks.map((item) => {
-                return (
-                  <div className="col" key={item.name}>
-                    <div className="card">
-                      <div className="card-body">
-                        <h5 className="card-title">{item.title}</h5>
-                        <p className="card-text">{item.description}</p>
-                      </div>
-                    </div>
-                  </div>);
-              })}
-            </List>
-          </div>
-          <div className="col-sm-4">
-            <List name="Done">
-              <div className="text-center">
-                <button type="button" className="btn btn-dark"
-                  onClick={setshowdone}>+ ADD TASK</button>
-              </div>
-              <div>
-                {showdoneInput && (
-                  <div className="input-group mt-3">
-                    <input type="text"
-                      className="form-control"
-                      placeholder="Task Title"
-                      onChange={(event) =>
-                        setNewtitle(event.target.value)
-                      }
-                      aria-describedby="button-addon2"></input>
-                    <div className="input-group-append">
-                      <button
-                        className="btn btn-outline-secondary"
-                        type="button"
-                        onClick={addTaskSubmission}
-                        id="button-addon2"
-                        data-status="Done">Add</button>
-                    </div>
-                  </div>)
-                }
-              </div>
-              {doneTasks.map((item) => {
-                return (
-                  <div className="col" key={item.name}>
-                    <div className="card">
-                      <div className="card-body">
-                        <h5 className="card-title">{item.title}</h5>
-                        <p className="card-text">{item.description}</p>
-                      </div>
-                    </div>
-                  </div>);
-              })}
-            </List>
+                  </List>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }
