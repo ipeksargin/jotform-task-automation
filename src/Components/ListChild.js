@@ -1,13 +1,15 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-function ListChild() {
+
+function ListChild(props) {
   return (
     <div className="row">
       <div className="col">
         <div className="card">
           <div className="card-body">
-            <h5 className="card-title">Special title treatment</h5>
-            <p className="card-text">With supporting text below as a natural lead-in to additional content.</p>
+            <h5 className="card-title">{props.title}</h5>
+            <p className="card-text">{props.description}</p>
           </div>
         </div>
       </div>
@@ -15,4 +17,8 @@ function ListChild() {
   );
 }
 
+ListChild.propTypes = {
+  'title': PropTypes.string.isRequired,
+  'description': PropTypes.string.isRequired,
+};
 export default ListChild;
