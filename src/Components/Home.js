@@ -47,9 +47,9 @@ function Home() {
 
     const tasks = data.reduce((acc, i) => {
       if (!acc[i.answers[3].answer]) {
-        acc[i.answers[3].answer] = [i.answers[3]];
+        acc[i.answers[3].answer] = [i.answers];
       } else {
-        acc[i.answers[3].answer].push([i.answers[3]]);
+        acc[i.answers[3].answer].push([i.answers]);
       }
       return acc;
     }, {});
@@ -152,9 +152,8 @@ function Home() {
           <div className="row">
             {options.map((option) =>{
               return (
-                <div className="col-sm-4" key={option}>{}
+                <div className="col-sm-4" key={option}>
                   <List name={option}>
-                    <ListChild title="abc" description="xys"/>
                     <div className="text-center">
                       <button
                         type="button"
@@ -181,7 +180,7 @@ function Home() {
                               className="btn btn-outline-secondary"
                               type="button"
                               name="title"
-                              data-status="To Do"
+                              data-status={option}
                               onClick={addTaskSubmission}
                               id="button-addon2"
                             >Add</button>
