@@ -8,7 +8,13 @@ function ListChild(props) {
       <div className="col">
         <div className="card">
           <div className="card-body">
-            <h5 className="card-title">{props.title}</h5>
+            <h5 className="card-title">{props.title}
+              <button
+                type="button"
+                className="btn btn-outline-dark btn-sm ml-5"
+                onClick={props.click}
+                data-status={props.status}
+              >Move Task</button></h5>
             <p className="card-text">{props.description}</p>
           </div>
         </div>
@@ -20,5 +26,7 @@ function ListChild(props) {
 ListChild.propTypes = {
   'title': PropTypes.string.isRequired,
   'description': PropTypes.string.isRequired,
+  'click': PropTypes.func.isRequired,
+  'status': PropTypes.isRequired,
 };
 export default ListChild;

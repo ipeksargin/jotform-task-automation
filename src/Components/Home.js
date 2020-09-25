@@ -2,23 +2,18 @@
 import React, {useState, useCallback, useEffect} from 'react';
 import Head from './Head';
 import List from './List';
-import ListChild from './ListChild';
 import {runGetRequestWithParams, runPostRequestWithParams} from '../Helper/APIHelper';
 import {useParams} from 'react-router-dom';
 import Image from '../imgg.jpg'; // Import using relative path
 
 
 function Home() {
-  const [todoTasks, setTodoTasks] = useState([]);
-  const [doneTasks, setDoneTasks] = useState([]);
-  const [progressTasks, setProgressTasks] = useState([]);
-  const [showtodoInput, setshowtodoInput] = useState(false);
-  const [showprogressInput, setshowprogressInput] = useState(false);
-  const [showdoneInput, setshowdoneInput] = useState(false);
-  const [newTitle, setNewtitle] = useState('');
+  const [tasks, setTasks] = useState({});
   const [mounted, setMounted] = useState(false);
   const [options, setOptions] = useState([]);
   const [statusID, setStatusID] = useState(null);
+  const [mappings, setMappings] = useState({});
+
 
   const styles = {
     paperContainer: {
@@ -28,121 +23,94 @@ function Home() {
   };
 
   const {boardid} = useParams();
-
-  // useEffect, mounted tricki ile, once formun questionlarini cek.
-  // status question idsi mappingte var. onunla optionlari bul
-  // orn (Planlanmamis|Calisilacak|Calisilan|Tamamlanmis|).split('|')
-  // answerlari cek, ustte buldugun, optionlara gore grupla,
-
-  const getSubmissions = useCallback(async () => {
+  const getSubmissions = useCallback(async (_status) => {
     const endPoint = `form/${boardid}/submissions`;
     const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
     const response = await runGetRequestWithParams(endPoint, queryString);
 
     const data = response.data.content;
-    console.log(data);
+    // console.log(data);
 
-    // console.log(options);
-    console.log(statusID);
+    console.log(_status);
 
     const tasks = data.reduce((acc, i) => {
-      if (!acc[i.answers[3].answer]) {
-        acc[i.answers[3].answer] = [i.answers];
+      if (!acc[i.answers[_status].answer]) {
+        acc[i.answers[_status].answer] = [i.answers];
       } else {
-        acc[i.answers[3].answer].push([i.answers]);
+        acc[i.answers[_status].answer].push(i.answers);
       }
       return acc;
     }, {});
+
+    setTasks(tasks);
     console.log(tasks);
 
-    setDoneTasks(tasks.Done);
-    setProgressTasks(tasks.Doing);
-    setTodoTasks(tasks['To Do']);
-
-    // setTodoTasks(todoTasks);
     // const progressTasks = items.filter((item) => item.status==='Doing');
-  }, [boardid, statusID]);
+  }, [boardid]);
+
+  const getFormQuestions = useCallback(async () => {
+    const endPoint = `form/${boardid}/questions`;
+    const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+    const response = await runGetRequestWithParams(endPoint, queryString);
+    const responseContent = response.data.content;
+    // console.log(responseContent);
+
+    const boards = JSON.parse(localStorage.getItem('boards'));
+    const board = boards.find((b) => b.id === boardid);
+    // console.log(board);
+    const _status = board.mappings.status;
+    // console.log(statusID);
+    setStatusID(_status);
+    setMappings(board.mappings);
+    console.log(mappings.status);
+
+
+    const options = responseContent[_status].options;
+    const optionsArr = options.split('|');
+    // console.log(optionsArr);
+    setOptions(optionsArr);
+    setMounted(true);
+    return _status;
+    // console.log(optionsArr);
+  }, [boardid, mappings]);
+
 
   useEffect(() => {
-    async function getFormQuestions() {
-      const endPoint = `form/${boardid}/questions`;
-      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
-      const response = await runGetRequestWithParams(endPoint, queryString);
-      const responseContent = response.data.content;
-      // console.log(responseContent);
-
-      const boards = JSON.parse(localStorage.getItem('boards'));
-      const questionBoard = boards.find((b) => b.id === boardid);
-      // console.log(questionBoard);
-      const statusID = questionBoard.mappings.status;
-      // console.log(statusID);
-      setStatusID(statusID);
-
-      const options = responseContent[statusID].options;
-      const optionsArr = options.split('|');
-      // console.log(optionsArr);
-      setOptions(optionsArr);
-      setMounted(true);
-      console.log(optionsArr);
+    async function getBoardData() {
+      const statusID = await getFormQuestions();
+      await getSubmissions(statusID);
     }
     if (!mounted) {
-      getFormQuestions();
-      getSubmissions();
+      getBoardData();
     }
-  }, [boardid, getSubmissions, mounted]);
+  }, [getFormQuestions, getSubmissions, mounted]);
 
-  const addTaskSubmission = useCallback(async (e) => {
+  const addNewTask = useCallback(async (status, title) => {
     try {
-      const statusof = e.currentTarget.getAttribute('data-status');
-      switch (statusof) {
-        case 'To Do':
-          setshowtodoInput(false);
-          break;
-        case 'Doing':
-          setshowprogressInput(false);
-          break;
-        case 'Done':
-          setshowdoneInput(false);
-          break;
-      }
       const endpoint = `form/${boardid}/submissions`;
       const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
       let data = new FormData();
-      data = {
-        '3': statusof,
-        '4': newTitle,
-        '5': ' ',
-      };
+      data = {};
+      data[mappings.status] = status;
+      data[mappings.title] = title;
       const response = await runPostRequestWithParams(endpoint, queryString, data);
       console.log(response);
       console.log(data);
     } catch (e) {
       console.log(e);
     }
-  }, [boardid, newTitle]);
-
-  const setshowdone = useCallback((e) => {
-    setshowdoneInput(true);
-  }, []);
-
-  const setshowtodo = useCallback((e) => {
-    setshowtodoInput(true);
-  }, []);
-
-  const setshowprogress = useCallback((e) => {
-    setshowprogressInput(true);
-  }, []);
+  }, [boardid, mappings.status, mappings.title]);
 
   const moveTask = useCallback(async (e) => {
     const taskStatus = e.currentTarget.getAttribute('data-status');
     console.log(taskStatus);
-    const endPoint = `form/${boardid}/submissions`;
-    const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
-    const response = await runGetRequestWithParams(endPoint, queryString);
+    // const endPoint = `form/${boardid}/submissions`;
+    // const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+    //  const response = await runGetRequestWithParams(endPoint, queryString);
 
-    const data = response.data.content;
-    console.log(data);
-  }, [boardid]);
+    // const data = response.data.content;
+    // console.log(data);
+  }, []);
 
   return (
     <div style={styles.paperContainer}>
@@ -153,42 +121,13 @@ function Home() {
             {options.map((option) =>{
               return (
                 <div className="col-sm-4" key={option}>
-                  <List name={option}>
-                    <div className="text-center">
-                      <button
-                        type="button"
-                        onClick={setshowtodo}
-                        className="btn btn-dark mt-2"
-                        data-option={option}
-                      >
-                      + ADD TASK
-                      </button>
-                    </div>
-                    <div>
-                      {showtodoInput && (
-                        <div className="input-group mt-3">
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Task Title"
-                            aria-describedby="button-addon2"
-                            onChange={(event) =>
-                              setNewtitle(event.target.value)
-                            }></input>
-                          <div className="input-group-append">
-                            <button
-                              className="btn btn-outline-secondary"
-                              type="button"
-                              name="title"
-                              data-status={option}
-                              onClick={addTaskSubmission}
-                              id="button-addon2"
-                            >Add</button>
-                          </div>
-                        </div>)
-                      }
-                    </div>
-                  </List>
+                  <List
+                    name={option}
+                    tasks={tasks[option] || []}
+                    mappings={mappings}
+                    onMoveTask={moveTask}
+                    onAddNewTask={addNewTask}
+                  />
                 </div>
               );
             })}
