@@ -54,9 +54,9 @@ function Boards() {
       const response = await axios.post(`https://api.jotform.com/form/202601638528050/clone?apiKey=${apiKey}`, data);
       console.log(response.data);
       const mappings = {
-        description: 'taskDescription',
-        title: 'taskTitle',
-        status: 'status',
+        description: 5,
+        title: 4,
+        status: 3,
       };
       const values = {
         title: response.data.content.title,
