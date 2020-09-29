@@ -19,6 +19,14 @@ export async function runPostRequestWithParams(endPoint, queryString, data) {
   return null;
 }
 
+export async function runDeleteRequestWithParams(endPoint, queryString, data) {
+  const response = await axios.delete(`${baseUrl}/${endPoint}${queryString}`);
+  if (response.status === 200) {
+    return response;
+  }
+  return null;
+}
+
 export function convertJsonDataToArray(data) {
   const keys = Object.keys(data);
   const arr = [];
