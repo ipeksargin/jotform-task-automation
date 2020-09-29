@@ -129,12 +129,11 @@ function Boards() {
     history.push(`/boards/${configuration.formID}`);
   }, [forms, history]);
 
-  const deleteBoard = useCallback((e) => {
-    const boardID = e.target.getAttribute('board-id');
-    console.log(boardID);
-    console.log(boards);
-    const board = boards.find((b) => b.id === boardID);
-    console.log(board);
+  const handledeleteBoard = useCallback((e) => {
+    const boardID = e.currentTarget.getAttribute('board-id');
+    // const boardTitle = e.currentTarget.getAttribute('board-title');
+    // console.log(boardID);
+    setBoards(boards.filter((b) => b.id !== boardID));
   }, [boards]);
 
   if (!mounted) {
@@ -230,8 +229,9 @@ function Boards() {
                 <button type="button" className="btn btn">
                   <button type="button"
                     board-id={board.id}
+                    board-title={board.title}
                     className="close"
-                    onClick={deleteBoard}
+                    onClick={handledeleteBoard}
                     aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
