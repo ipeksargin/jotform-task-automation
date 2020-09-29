@@ -131,8 +131,15 @@ function Boards() {
 
   const handledeleteBoard = useCallback((e) => {
     const boardID = e.currentTarget.getAttribute('board-id');
-    // const boardTitle = e.currentTarget.getAttribute('board-title');
-    // console.log(boardID);
+
+    for (let i=0; i<boards.length; i++) {
+      if (boards[i].id === boardID) {
+        setBoards(boards.splice(i, 1));
+        localStorage.setItem('boards', JSON.stringify(boards));
+        break;
+      }
+    }
+
     setBoards(boards.filter((b) => b.id !== boardID));
   }, [boards]);
 
