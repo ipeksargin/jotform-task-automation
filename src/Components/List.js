@@ -15,7 +15,6 @@ function List(props) {
     props.onAddNewTask(props.name, newTitle);
   }, [newTitle, props]);
 
-
   return (
     <div className="row">
       <div className="col-md">
@@ -27,10 +26,12 @@ function List(props) {
                 return (
                   <ListChild
                     key={task.id}
-                    title={task[props.mappings.title].answer}
-                    description={task[props.mappings.description].answer}
+                    id={task.id}
+                    title={task.answers[props.mappings.title].answer}
+                    description={task.answers[props.mappings.description].answer}
                     click={props.onMoveTask}
-                    status={task[props.mappings.status].answer}
+                    status={task.answers[props.mappings.status].answer}
+                    closeClick={props.onDeleteTask}
                   />);
               })
             }
@@ -41,7 +42,8 @@ function List(props) {
                   className="form-control"
                   placeholder="New Task Title"
                   aria-describedby="button-addon2"
-                  onChange={handleTitleChange}></input>
+                  onChange={handleTitleChange}
+                ></input>
                 <div className="input-group-append">
                   <button
                     className="btn btn-outline-secondary"
@@ -69,6 +71,7 @@ List.propTypes = {
   'onAddNewTask': PropTypes.func.isRequired,
   'tasks': PropTypes.array,
   'mappings': PropTypes.shape,
+  'onDeleteTask': PropTypes.func.isRequired,
 };
 export default List;
 
