@@ -1,19 +1,18 @@
 
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useMemo} from 'react';
 import Head from './Head';
 import List from './List';
-import {runGetRequestWithParams, runPostRequestWithParams} from '../Helper/APIHelper';
+import {runGetRequestWithParams, runPostRequestWithParams, runDeleteRequestWithParams} from '../Helper/APIHelper';
 import {useParams} from 'react-router-dom';
-import Image from '../imgg.jpg'; // Import using relative path
+import Image from '../imgg.jpg';
 
 
 function Home() {
-  const [tasks, setTasks] = useState({});
   const [mounted, setMounted] = useState(false);
   const [options, setOptions] = useState([]);
   const [statusID, setStatusID] = useState(null);
   const [mappings, setMappings] = useState({});
-
+  const [submissions, setSubmissions] = useState([]);
 
   const styles = {
     paperContainer: {
@@ -23,56 +22,40 @@ function Home() {
   };
 
   const {boardid} = useParams();
-  const getSubmissions = useCallback(async (_status) => {
+
+  const getSubmissions = useCallback(async () => {
     const endPoint = `form/${boardid}/submissions`;
     const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
     const response = await runGetRequestWithParams(endPoint, queryString);
 
-    const data = response.data.content;
-    // console.log(data);
-
-    console.log(_status);
-
-    const tasks = data.reduce((acc, i) => {
-      if (!acc[i.answers[_status].answer]) {
-        acc[i.answers[_status].answer] = [i.answers];
-      } else {
-        acc[i.answers[_status].answer].push(i.answers);
-      }
-      return acc;
-    }, {});
-
-    setTasks(tasks);
-    console.log(tasks);
-
-    // const progressTasks = items.filter((item) => item.status==='Doing');
+    setSubmissions(response.data.content);
+    console.log(response.data.content);
   }, [boardid]);
 
   const getFormQuestions = useCallback(async () => {
     const endPoint = `form/${boardid}/questions`;
     const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
     const response = await runGetRequestWithParams(endPoint, queryString);
-    const responseContent = response.data.content;
-    // console.log(responseContent);
+    const questions = response.data.content;
 
     const boards = JSON.parse(localStorage.getItem('boards'));
     const board = boards.find((b) => b.id === boardid);
-    // console.log(board);
+
     const _status = board.mappings.status;
     // console.log(statusID);
     setStatusID(_status);
     setMappings(board.mappings);
-    console.log(mappings.status);
+    console.log(board.mappings.status);
 
-
-    const options = responseContent[_status].options;
+    console.log(_status);
+    const options = questions[_status].options; // hata veriyo
     const optionsArr = options.split('|');
     // console.log(optionsArr);
     setOptions(optionsArr);
     setMounted(true);
     return _status;
     // console.log(optionsArr);
-  }, [boardid, mappings]);
+  }, [boardid]);
 
 
   useEffect(() => {
@@ -95,23 +78,57 @@ function Home() {
       data[mappings.title] = title;
       const response = await runPostRequestWithParams(endpoint, queryString, data);
       console.log(response);
-      console.log(data);
+      // console.log(data);
+      // console.log(tasks);
+      const submissionID = response.data.content.submissionID;
+      const endp = `submission/${submissionID}`;
+      const respons = await runGetRequestWithParams(endp, queryString);
+      const sub = respons.data.content;
+      setSubmissions([...submissions, sub]);
     } catch (e) {
       console.log(e);
     }
-  }, [boardid, mappings.status, mappings.title]);
+  }, [boardid, mappings.status, mappings.title, submissions]);
+
+  const deleteTask = useCallback(async (id) => {
+    try {
+    // console.log(responseData);
+      const endpoint = `submission/${id}`;
+      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+      const response = await runDeleteRequestWithParams(endpoint, queryString);
+      setSubmissions(submissions.filter((s) => s.id !== id));
+    // console.log(response);
+    } catch (e) {
+      console.log(e);
+    }
+  }, [submissions]);
 
   const moveTask = useCallback(async (e) => {
-    const taskStatus = e.currentTarget.getAttribute('data-status');
-    console.log(taskStatus);
-    // const endPoint = `form/${boardid}/submissions`;
-    // const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
-    //  const response = await runGetRequestWithParams(endPoint, queryString);
-
-    // const data = response.data.content;
-    // console.log(data);
+    try {
+      const taskStatus = e.currentTarget.getAttribute('data-status');
+      const taskID = e.currentTarget.getAttribute('data-id');
+      const endPoint = `submission/${taskID}`;
+      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+      const response = await runGetRequestWithParams(endPoint, queryString);
+      console.log(taskID);
+      console.log(taskStatus);
+    } catch (e) {
+      console.log(e);
+    }
   }, []);
 
+  const tasks = useMemo(() => {
+    return options.reduce((acc, option) => {
+      if (!acc[option]) {
+        acc[option] = [];
+      }
+      acc[option] = submissions.filter((s) => {
+        return s.answers[mappings.status].answer === option;
+      });
+      return acc;
+    }, {});
+  }, [mappings, options, submissions]);
+  console.log(tasks);
   return (
     <div style={styles.paperContainer}>
       <div className="App">
@@ -123,10 +140,11 @@ function Home() {
                 <div className="col-sm-4" key={option}>
                   <List
                     name={option}
-                    tasks={tasks[option] || []}
+                    tasks={tasks[option]}
                     mappings={mappings}
                     onMoveTask={moveTask}
                     onAddNewTask={addNewTask}
+                    onDeleteTask={deleteTask}
                   />
                 </div>
               );
