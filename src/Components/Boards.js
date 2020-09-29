@@ -129,6 +129,14 @@ function Boards() {
     history.push(`/boards/${configuration.formID}`);
   }, [forms, history]);
 
+  const deleteBoard = useCallback((e) => {
+    const boardID = e.target.getAttribute('board-id');
+    console.log(boardID);
+    console.log(boards);
+    const board = boards.find((b) => b.id === boardID);
+    console.log(board);
+  }, [boards]);
+
   if (!mounted) {
     return null;
   }
@@ -220,6 +228,13 @@ function Boards() {
             boards.map((board) =>
               <div className="card mt-5 ml-3" key={board.id}>
                 <button type="button" className="btn btn">
+                  <button type="button"
+                    board-id={board.id}
+                    className="close"
+                    onClick={deleteBoard}
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
                   <div className="card-body">
                     <h5 className="card-title" >{board.title}</h5>
                     <p className="card-text"></p>
