@@ -14,6 +14,7 @@ function Home() {
   const [mappings, setMappings] = useState({});
   const [submissions, setSubmissions] = useState([]);
 
+
   const styles = {
     paperContainer: {
       backgroundImage: `url(${Image})`,
@@ -48,7 +49,7 @@ function Home() {
     console.log(board.mappings.status);
 
     console.log(_status);
-    const options = questions[_status].options; // hata veriyo
+    const options = questions[_status].options;
     const optionsArr = options.split('|');
     // console.log(optionsArr);
     setOptions(optionsArr);
@@ -103,20 +104,6 @@ function Home() {
     }
   }, [submissions]);
 
-  const moveTask = useCallback(async (e) => {
-    try {
-      const taskStatus = e.currentTarget.getAttribute('data-status');
-      const taskID = e.currentTarget.getAttribute('data-id');
-      const endPoint = `submission/${taskID}`;
-      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
-      const response = await runGetRequestWithParams(endPoint, queryString);
-      console.log(taskID);
-      console.log(taskStatus);
-    } catch (e) {
-      console.log(e);
-    }
-  }, []);
-
   const tasks = useMemo(() => {
     return options.reduce((acc, option) => {
       if (!acc[option]) {
@@ -126,9 +113,47 @@ function Home() {
         return s.answers[mappings.status].answer === option;
       });
       return acc;
-    }, {});
+    },
+    {});
   }, [mappings, options, submissions]);
   console.log(tasks);
+
+  const moveTask = useCallback(async (e) => {
+    try {
+      const taskID = e.currentTarget.getAttribute('data-id');
+      const taskStatus = e.currentTarget.getAttribute('data-status');
+
+      const endpoint = `submission/${taskID}`;
+      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+      console.log(options); // To do doing done
+      const x = options.indexOf(taskStatus);
+      let submissionData = new FormData();
+      submissionData = {};
+      if ((x % options.length === 0) || (x % options.length === 1)) {
+        submissionData[mappings.status] = options[x + 1];
+      } else {
+        submissionData[mappings.status] = options[0];
+      }
+      const response = await runPostRequestWithParams(endpoint, queryString, submissionData);
+      // console.log(submissionData);
+
+      setSubmissions(submissions.map((s) => {
+        if (s.id === taskID) {
+          if ((x % options.length === 0) || (x % options.length === 1)) {
+            s.answers[mappings.status].answer = options[x + 1];
+          } else {
+            s.answers[mappings.status].answer = options[0];
+          }
+        }
+        return s;
+      }));
+      console.log(tasks);
+    } catch (e) {
+      console.log(e);
+    }
+  }, [mappings.status, options, submissions, tasks]);
+
+
   return (
     <div style={styles.paperContainer}>
       <div className="App">
