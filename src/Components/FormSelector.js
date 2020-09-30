@@ -76,21 +76,29 @@ function FormSelector({forms, closeExistingModal, onSave}) {
                   return (
                     <>
                       <p>{`${mappingKey.title}`}: </p>
-                      <div className="btn-group btn-group-sm">
-                        {
-                          formColums.map((col) => (
-                            <button
-                              key={col.name}
-                              type="button"
-                              data-mapping-id={mappingKey.id}
-                              data-question-id={col.qid}
-                              onClick={handleMappingSelect}
-                              className="btn btn-primary ml-2"
-                            >
-                              {col.text}
-                            </button>
-                          ))
-                        }
+                      <div className="dropdown">
+                        <button
+                          className="btn btn-secondary dropdown-toggle"
+                          type="button" id="dropdownMenu2"
+                          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          {`${mappingKey.title}`}
+                        </button>
+                        <div className="dropdown-menu"
+                          aria-labelledby="dropdownMenu2">
+                          {
+                            formColums.map((col) => (
+
+                              <button className="dropdown-item"
+                                key={col.name}
+                                type="button"
+                                data-mapping-id={mappingKey.id}
+                                data-question-id={col.qid}
+                                onClick={handleMappingSelect}
+                              >{col.text}</button>
+                            ))
+                          }
+                        </div>
+
                       </div>
                     </>
                   );
@@ -131,7 +139,7 @@ function FormSelector({forms, closeExistingModal, onSave}) {
       <div className="modal-dialog modal-dialog-scrollable" role="document">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title" id="exampleModalLabel">Modal title</h5>
+            <h5 className="modal-title" id="exampleModalLabel">Choose a Form</h5>
             <button
               type="button"
               className="close"
