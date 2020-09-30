@@ -81,7 +81,8 @@ function Boards() {
     const apiKey = auth.user;
     try {
       const response = await axios.get(`https://api.jotform.com/user/forms?apiKey=${apiKey}`);
-      setForms(response.data.content);
+      const forms = response.data.content.filter((f) => f.status !== 'DELETED');
+      setForms(forms);
       setModal(true);
     } catch (e) {
       console.log(e);
@@ -171,12 +172,13 @@ function Boards() {
                   <div className="modal-body">
                     <form>
                       <div className="form-group">
-                        <label htmlFor="message-text" className="col-form-label">Enter Form Title</label>
-                        <textarea
+                        <label htmlFor="message-text" className="col-form-label">Enter Board Title</label>
+                        <input
+                          type="text"
                           className="form-control"
                           id="message-text"
                           onChange={(event) => setTitle(event.target.value)}
-                        ></textarea>
+                        ></input>
                       </div>
                     </form>
                   </div>
@@ -217,7 +219,7 @@ function Boards() {
                 data-toggle="modal"
                 onClick={onNewButtonClick}
               >
-                Create New Form
+                Create New Board
               </button>
               <button
                 type="button"
