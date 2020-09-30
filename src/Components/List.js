@@ -40,7 +40,7 @@ function List(props) {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="New Task Title"
+                  placeholder="New Form Title"
                   aria-describedby="button-addon2"
                   onChange={handleTitleChange}
                 ></input>
