@@ -76,29 +76,20 @@ function FormSelector({forms, closeExistingModal, onSave}) {
                   return (
                     <>
                       <p>{`${mappingKey.title}`}: </p>
-                      <div className="dropdown">
-                        <button
-                          className="btn btn-secondary dropdown-toggle"
-                          type="button" id="dropdownMenu2"
-                          data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                          {`${mappingKey.title}`}
-                        </button>
-                        <div className="dropdown-menu"
-                          aria-labelledby="dropdownMenu2">
+                      <div className="form-group">
+                        <select className="form-control" id="exampleFormControlSelect1">
                           {
                             formColums.map((col) => (
-
-                              <button className="dropdown-item"
+                              <option
                                 key={col.name}
                                 type="button"
                                 data-mapping-id={mappingKey.id}
                                 data-question-id={col.qid}
                                 onClick={handleMappingSelect}
-                              >{col.text}</button>
+                              >{col.text}</option>
                             ))
                           }
-                        </div>
-
+                        </select>
                       </div>
                     </>
                   );
