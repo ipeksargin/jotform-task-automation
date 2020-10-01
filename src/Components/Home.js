@@ -5,15 +5,16 @@ import List from './List';
 import {runGetRequestWithParams, runPostRequestWithParams, runDeleteRequestWithParams} from '../Helper/APIHelper';
 import {useParams} from 'react-router-dom';
 import Image from '../imgg.jpg';
+import {DragDropContext, Droppable} from 'react-beautiful-dnd';
 
 
 function Home() {
   const [mounted, setMounted] = useState(false);
   const [options, setOptions] = useState([]);
   const [statusID, setStatusID] = useState(null);
+  const [taskid, setTaskID] = useState(null);
   const [mappings, setMappings] = useState({});
   const [submissions, setSubmissions] = useState([]);
-
 
   const styles = {
     paperContainer: {
@@ -121,6 +122,7 @@ function Home() {
   const moveTask = useCallback(async (e) => {
     try {
       const taskID = e.currentTarget.getAttribute('data-id');
+      setTaskID(taskID);
       const taskStatus = e.currentTarget.getAttribute('data-status');
 
       const endpoint = `submission/${taskID}`;
@@ -153,30 +155,67 @@ function Home() {
     }
   }, [mappings.status, options, submissions, tasks]);
 
+  const onDragEnd = useCallback(async (result) => {
+    // console.log(result.draggableId);
+    const id = result.draggableId;
+    if (!result.destination) return;
+    const {source, destination} = result;
+    if (source.droppableId !== destination.droppableId) {
+      const sourceItems = tasks[source.droppableId];
+      const destItems = tasks[destination.droppableId];
+      const [removed] = sourceItems.splice(source.index, 1);
+      destItems.splice(destination.index, 0, removed);
+
+      const endpoint = `submission/${id}`;
+      const queryString = `?apiKey=${localStorage.getItem('apiKey')}`;
+      let submissionData = new FormData();
+      submissionData = {};
+      submissionData[mappings.status] = destination.droppableId;
+      const response = await runPostRequestWithParams(endpoint, queryString, submissionData);
+      console.log(source);
+      setSubmissions(submissions.map((s) => {
+        if (s.id === id) {
+          s.answers[mappings.status].answer = destination.droppableId;
+        }
+        return s;
+      }));
+    }
+  }, [mappings.status, submissions, tasks]);
 
   return (
     <div style={styles.paperContainer}>
-      <div className="App">
-        <Head />
-        <div className="container">
-          <div className="row">
-            {options.map((option) =>{
-              return (
-                <div className="col-sm-4" key={option}>
-                  <List
-                    name={option}
-                    tasks={tasks[option]}
-                    mappings={mappings}
-                    onMoveTask={moveTask}
-                    onAddNewTask={addNewTask}
-                    onDeleteTask={deleteTask}
-                  />
-                </div>
-              );
-            })}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="App">
+          <Head />
+          <div className="container">
+            <div className="row">
+              {options.map((option) =>{
+                return (
+                  <Droppable droppableId={option} key={option}>
+                    {(provided, snapshot) => {
+                      return (
+                        <div className="col-sm-4" key={option}
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}>
+                          <List
+                            name={option}
+                            tasks={tasks[option]}
+                            mappings={mappings}
+                            onMoveTask={moveTask}
+                            onAddNewTask={addNewTask}
+                            onDeleteTask={deleteTask}
+                          />
+                          {provided.placeholder}
+                        </div>
+                      );
+                    }}
+                  </Droppable>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      </DragDropContext>
     </div>
   );
 }

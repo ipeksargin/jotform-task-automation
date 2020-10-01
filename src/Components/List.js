@@ -1,18 +1,22 @@
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
 import ListChild from './ListChild';
+import {Draggable} from 'react-beautiful-dnd';
 
 function List(props) {
   const [newTitle, setNewtitle] = useState('');
+  const [placeholder, setPlaceholder] = useState('New Form Title');
 
   // console.log(props.mappings);
 
   const handleTitleChange = useCallback((e) => {
     setNewtitle(e.target.value);
+    console.log(e.target.placeholder);
   }, []);
 
-  const handleNewTaskClick = useCallback(() => {
-    props.onAddNewTask(props.name, newTitle);
+  const handleNewTaskClick = useCallback(async () => {
+    await props.onAddNewTask(props.name, newTitle);
+    setPlaceholder('New Form Title');
   }, [newTitle, props]);
 
   return (
@@ -22,17 +26,28 @@ function List(props) {
           <div className="card-body">
             <h5 className="card-title text-center text-uppercase">{props.name}</h5>
             {
-              props.tasks.map((task) => {
+              props.tasks.map((task, index) => {
                 return (
-                  <ListChild
-                    key={task.id}
-                    id={task.id}
-                    title={task.answers[props.mappings.title].answer}
-                    description={task.answers[props.mappings.description].answer}
-                    click={props.onMoveTask}
-                    status={task.answers[props.mappings.status].answer}
-                    closeClick={props.onDeleteTask}
-                  />);
+                  <Draggable key={task.id} draggableId={task.id} index={index}>
+                    {(provided, snapshot) => {
+                      return (
+                        <div ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <ListChild
+                            key={task.id}
+                            id={task.id}
+                            title={task.answers[props.mappings.title].answer}
+                            description={task.answers[props.mappings.description].answer}
+                            click={props.onMoveTask}
+                            status={task.answers[props.mappings.status].answer}
+                            closeClick={props.onDeleteTask}
+                          />
+                        </div>
+                      );
+                    }}
+                  </Draggable>);
               })
             }
             <div>
@@ -40,7 +55,7 @@ function List(props) {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="New Form Title"
+                  placeholder={placeholder}
                   aria-describedby="button-addon2"
                   onChange={handleTitleChange}
                 ></input>
